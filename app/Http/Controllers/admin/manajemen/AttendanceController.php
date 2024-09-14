@@ -18,7 +18,6 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        // Cek apakah user adalah teacher
         if ($user->role->name !== 'teacher') {
             abort(403, 'Unauthorized action.');
         }
@@ -52,43 +51,35 @@ class AttendanceController extends Controller
      */
     public function show(Request $request)
     {
-        // Ambil parameter date dari URL
         $date = $request->query('date');
 
-        // Logika untuk menampilkan halaman absensi sesuai tanggal
         return view('user.absensi.show', ['date' => $date]);
     }
 
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
             'nis' => 'required|string',
-            'photo' => 'nullable|image|max:2048', // Validasi untuk foto
+            'photo' => 'nullable|image|max:2048',
         ]);
 
-        // Cari pengguna berdasarkan NIS
         $user = User::where('nis', $request->nis)->first();
 
-        // Jika pengguna tidak ditemukan, kembalikan dengan pesan kesalahan
         if (!$user) {
             return back()->withErrors(['nis' => 'NIS tidak ditemukan.']);
         }
 
-        // Jika ada file foto, simpan di folder 'photos' dalam disk 'public'
         $photoPath = null;
         if ($request->hasFile('photo')) {
             $photoPath = $request->file('photo')->store('photos', 'public');
         }
 
-        // Simpan data absensi ke database
         Attendance::create([
             'nis' => $request->nis,
             'photo' => $photoPath,
             'absen_at' => now(),
         ]);
 
-        // Redirect kembali dengan pesan sukses
         return redirect()->route('absensi')->with('success', 'Absensi berhasil.');
     }
 
